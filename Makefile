@@ -6,7 +6,7 @@ get:
 	go get "github.com/sirupsen/logrus"
 
 build:
-	go build -v -o bin/nwg-dock-hyprland .
+	nice -n 19 go build -v -o bin/nwg-dock-hyprland .
 
 install:
 	-pkill -f nwg-dock-hyprland
