@@ -92,6 +92,7 @@ var resident = flag.Bool("r", false, "Leave the program resident, but w/o hotspo
 var targetOutput = flag.String("o", "", "name of Output to display the dock on")
 var allowMultipleInstances = flag.Bool("m", false, "allow Multiple instances of the dock (skip lock file check)")
 var hideIndicators = flag.Bool("hi", false, "hide Indicators: don't show task state indicator dots")
+var hideDelay = flag.Int("hdd", 1000, "Hide Delay [ms]: delay before the dock hides after cursor leaves")
 
 var vertical bool
 var alignmentBox *gtk.Box
@@ -335,7 +336,7 @@ func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 	if *autohide {
 		win.Connect("leave-notify-event", func() {
 			mouseInsideHotspot = false
-			glib.TimeoutAdd(1000, func() bool {
+			glib.TimeoutAdd(uint(*hideDelay), func() bool {
 				if !mouseInsideDock && !mouseInsideHotspot {
 					dockWindow.Hide()
 				}
@@ -376,6 +377,10 @@ func main() {
 	flag.Parse()
 	if *debug {
 		log.SetLevel(log.DebugLevel)
+	}
+
+	if *hideDelay < 0 {
+		*hideDelay = 0
 	}
 
 	if *autohide && *resident {
@@ -657,7 +662,8 @@ func main() {
 	// Close the window on leave, but not immediately, to avoid accidental closes
 	win.Connect("leave-notify-event", func() {
 		if *autohide {
-			src = glib.TimeoutAdd(uint(1000), func() bool {
+			cancelClose()
+			src = glib.TimeoutAdd(uint(*hideDelay), func() bool {
 				mouseInsideDock = false
 				win.Hide()
 				src = 0
