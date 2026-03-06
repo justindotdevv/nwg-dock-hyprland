@@ -1,47 +1,67 @@
-# nwg-dock-hyprland
+# nwg-dock-hyprland (fork)
 
-This application is a part of the [nwg-shell](https://nwg-piotr.github.io/nwg-shell) project.
+> This is a fork of [nwg-piotr/nwg-dock-hyprland](https://github.com/nwg-piotr/nwg-dock-hyprland) with additional features and quality-of-life improvements. All credit for the original project goes to [Piotr Miller](https://github.com/nwg-piotr) and the [nwg-shell](https://nwg-piotr.github.io/nwg-shell) contributors.
 
-**Contributing:** please read the [general contributing rules for the nwg-shell project](https://nwg-piotr.github.io/nwg-shell/contribution).
-
-Configurable (w/ command line arguments and css) dock, written in Go, aimed exclusively at the [Hyprland](https://github.com/hyprwm/Hyprland) 
-Wayland compositor. It features pinned buttons, client buttons and the launcher button. The latter by default starts 
-[nwg-drawer](https://github.com/nwg-piotr/nwg-drawer).
-
-You'll find a lot of useful information in [this video](https://youtu.be/16KX3vnbNcg?si=POGOVwYxPXDIrwrT) on the "My Linux For Work" YT channel by Stephan Raabe.
+Configurable (w/ command line arguments and css) dock, written in Go, aimed exclusively at the [Hyprland](https://github.com/hyprwm/Hyprland) Wayland compositor. It features pinned buttons, client buttons and the launcher button. The latter by default starts [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer).
 
 ![2023-04-22-021230_hypr_screenshot](https://user-images.githubusercontent.com/20579136/233751336-b5c6abdd-72f7-43c7-b34d-e2f64248eb86.png)
 
 ![image](https://user-images.githubusercontent.com/20579136/233751391-97f8f685-55ae-4078-badf-b8c3d7c41ab4.png)
 
-## Differences from nwg-dock for sway:
+## Fork Additions
 
-- instead of swayipc, we use Hyprland IP C, via socket & socket2, to execute hyprctl commands and listen to events;
-- removed the workspace switcher button; AFAIK it's not widely used even on sway. On Hyprland I don't know of a way to check the currently focused workspace, and it would limit the functionality of the button;
-- added highlighting of the button that represents the focused client (permanent docks only);
-- added 2 entries to the context (right click) menu: `togglefloating` and `fullscreen`;
-- fixed searching .desktop files of the names starting from `org.` and the like.
+The following features are **not available** in the upstream project and are unique to this fork:
 
-[![Packaging status](https://repology.org/badge/vertical-allrepos/nwg-dock-hyprland.svg)](https://repology.org/project/nwg-dock-hyprland/versions)
+### `-hi` — Hide Indicators
+
+Hides the active application state indicator dots that appear below (or beside) dock icons. Useful for a cleaner, minimal dock appearance.
+
+```text
+nwg-dock-hyprland -d -hi
+```
+
+### `-hdd` — Configurable Hide Delay
+
+Controls how long (in milliseconds) the dock waits before hiding after the cursor leaves. The upstream project has this hardcoded to 1000ms. This flag lets you tune it to your preference.
+
+```text
+# Hide after 500ms instead of the default 1000ms
+nwg-dock-hyprland -d -hdd 500
+
+# Hide immediately
+nwg-dock-hyprland -d -hdd 0
+```
+
+### Low-Priority Build
+
+The Makefile uses `nice -n 19` during compilation so that builds don't hog CPU resources — helpful on lower-powered machines or when building alongside other tasks.
 
 ## Installation
 
 ### Requirements
 
-- `go`>=1.20 (just to build)
+- `go` >= 1.20 (just to build)
 - `gtk3`
 - `gtk-layer-shell`
-- [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer): optionally. You may use another launcher (see help),
-or none at all. The launcher button won't show up, if so.
+- [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer): optional. You may use another launcher (see `-c` flag), or none at all. The launcher button won't show up if no launcher is configured.
 
-### Steps
+### Building from Source
 
-1. Clone the repository, cd into it.
-2. Install golang libraries with `make get`. First time it may take ages, be patient.
-3. `make build`
-4. `sudo make install`
+```bash
+git clone https://github.com/justindotdevv/nwg-dock-hyprland.git
+cd nwg-dock-hyprland
+make get       # Install Go dependencies (may take a while the first time)
+make build     # Compile the binary
+sudo make install
+```
 
-## Running
+To uninstall:
+
+```bash
+sudo make uninstall
+```
+
+## Usage
 
 Either start the dock permanently in `hyprland.conf`:
 
@@ -49,45 +69,37 @@ Either start the dock permanently in `hyprland.conf`:
 exec-once = nwg-dock-hyprland [arguments]
 ```
 
-or assign the command to some key binding. Running the command again kills the existing program instance, so that
-you could use the same key to open and close the dock.
+or assign the command to a key binding. Running the command again kills the existing program instance, so you can use the same key to open and close the dock.
 
-## Running the dock residently
+### Running Residently
 
-If you run the program with the `-d` or `-r` argument (preferably in autostart), it will be running residently.
+Start the dock with `-d` or `-r` (preferably in autostart) to keep it running in the background.
 
-```text
-exec_always nwg-dock-hyprland -d
-```
-
-or
+#### `-d` for autohiDe
 
 ```text
-exec_always nwg-dock-hyprland -r
+exec-once = nwg-dock-hyprland -d
 ```
 
-### `-d` for autohiDe
+Move the mouse pointer to the expected dock location for the dock to appear. It will hide after the cursor leaves (delay configurable with `-hdd`). Invisible hotspots are created on all outputs unless you specify one with `-o`.
 
-Move the mouse pointer to expected dock location for the dock to show up. It will be hidden a second after you leave the
-window. Invisible hot spots will be created on all your outputs, unless you specify one with the `-o` argument.
+#### `-r` for just Resident
 
-### `-r` for just Resident
+```text
+exec-once = nwg-dock-hyprland -r
+```
 
-No hotspot will be created. To show/hide the dock, bind the `exec nwg-dock-hyprland` command to some key or button.
-How about the `Menu` key, which is usually useless?
+No hotspot is created. To show/hide the dock, bind `exec nwg-dock-hyprland` to a key. Re-execution toggles visibility. You can also use signals:
 
-Re-execution of the same command hides the dock. If a resident instance found, the `nwg-dock-hyprland` command w/o
-arguments sends `SIGUSR1` to it. Actually `pkill -USR1 nwg-dock-hyprland` could be used instead. This also works in autohiDe
-mode.
+```text
+pkill -SIGRTMIN+1 nwg-dock-hyprland  # Toggle visibility
+pkill -SIGRTMIN+2 nwg-dock-hyprland  # Show
+pkill -SIGRTMIN+3 nwg-dock-hyprland  # Hide
+```
 
-Re-execution of the command with the `-d` or `-r` argument won't kill the running instance. If the dock is
-running residently, another instance will just exit with 0 code. In case you'd like to terminate it anyway, you need 
-to `pkill -f nwg-dock-hyprland`.
+### All Flags
 
-*NOTE: you need to kill the running instance before reloading Hyprland, if you've just changed the arguments you
-auto-start the dock with.*
-
-```txt
+```text
 $ nwg-dock-hyprland -h
 Usage of nwg-dock-hyprland:
   -a string
@@ -139,14 +151,7 @@ Usage of nwg-dock-hyprland:
   -w int
     	number of Workspaces you use (default 10)
   -x	set eXclusive zone: move other windows aside; overrides the "-l" argument
-
-Usage of signals:
- SIGRTMIN+1 (signal 35): toggle dock visibility (USR1 has been deprecated)
- SIGRTMIN+2 (signal 36): show the dock
- SIGRTMIN+3 (signal 37): hide the dock
 ```
-
-![screenshot-2.png](https://raw.githubusercontent.com/nwg-piotr/nwg-shell-resources/master/images/nwg-dock/dock-2.png)
 
 ## Styling
 
@@ -156,46 +161,28 @@ Edit `~/.config/nwg-dock-hyprland/style.css` to your taste.
 
 ### An application icon is not displayed
 
-The only thing the dock knows about the app is it's class name.
+The dock identifies apps by their class name (check with `hyprctl clients`). It looks for an icon matching the class name, then falls back to searching for a `.desktop` file.
 
-```text
-$ hyprctl clients
-(...)
-Window 55a62254b8c0 -> piotr@msi:~:
-	mapped: 1
-	hidden: 0
-	at: 1204,270
-	size: 2552,1402
-	workspace: 6 (6)
-	floating: 0
-	monitor: 2
-	class: foot
-	title: piotr@msi:~
-	initialClass: foot
-	initialTitle: foot
-	pid: 58348
-	xwayland: 0
-	pinned: 0
-	fullscreen: 0
-	fullscreenmode: 0
-	fakefullscreen: 0
-	grouped: 0
-	swallowing: 0
-```
+If an app has no icon in the dock:
 
-Now it'll look for an icon named 'foot'. If that fails, it'll look for a .desktop file named foot.desktop, which should contain the icon name or path. If this fails as well, no icon will be displayed. I've added workarounds for some most common exceptions, but it's impossible to predict every single application misbehaviour. This is either programmers fault (improper class name), or bad packaging (.desktop file name different from the application class name).
+1. Check the app class name: `hyprctl clients`
+2. Find the app's `.desktop` file
+3. Copy it to `~/.local/share/applications/` and rename to `<class_name>.desktop`
 
-If some app has no icon in the dock:
+If the `.desktop` file contains a proper `Icon=` definition, it should work.
 
-1. check the app class name (`hyprctl clients`);
-2. find the app's .desktop file;
-3. copy it to ~/.local/share/applications/` and rename to <class_name>.desktop.
+## Documentation
 
-If the .desktop file contains proper icon definition (`Icon=`), it should work now.
+- [nwg-shell project](https://nwg-piotr.github.io/nwg-shell) — The parent project and documentation hub
+- [Upstream repository](https://github.com/nwg-piotr/nwg-dock-hyprland) — Original nwg-dock-hyprland project
+- [Hyprland Wiki](https://wiki.hyprland.org/) — Hyprland compositor documentation
+- [Video walkthrough](https://youtu.be/16KX3vnbNcg?si=POGOVwYxPXDIrwrT) by Stephan Raabe on the "My Linux For Work" YT channel
 
 ## Credits
 
-This program uses some great libraries:
+This is a fork of [nwg-dock-hyprland](https://github.com/nwg-piotr/nwg-dock-hyprland) by [Piotr Miller (nwg-piotr)](https://github.com/nwg-piotr), released under the [MIT License](LICENSE).
 
-- [gotk4](https://github.com/diamondburned/gotk4) by [diamondburned](https://github.com/diamondburned) released under [GNU Affero General Public License v3.0](https://github.com/diamondburned/gotk4/blob/4/LICENSE.md)
-- [go-singleinstance](github.com/allan-simon/go-singleinstance) Copyright (c) 2015 Allan Simon
+### Libraries
+
+- [gotk4](https://github.com/diamondburned/gotk4) by [diamondburned](https://github.com/diamondburned) — [GNU AGPL v3.0](https://github.com/diamondburned/gotk4/blob/4/LICENSE.md)
+- [go-singleinstance](https://github.com/allan-simon/go-singleinstance) by Allan Simon
