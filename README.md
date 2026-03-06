@@ -102,6 +102,8 @@ Usage of nwg-dock-hyprland:
     	quote-delimited, space-separated class list to iGnore in the dock
   -hd int
     	Hotspot Delay [ms]; the smaller, the faster mouse pointer needs to enter hotspot for the dock to appear; set 0 to disable (default 20)
+  -hdd int
+    	Hide Delay [ms]: delay before the dock hides after cursor leaves (default 1000)
   -hi	hide Indicators: don't show active application state indicator dots
   -hl string
     	Hotspot Layer "overlay" or "top" (default "overlay")
